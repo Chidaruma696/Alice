@@ -1,0 +1,16 @@
+# Runtime data and office-specific adapters never enter the repository
+data/
+adapters/*
+!adapters/example/
+
+# Installer build output and downloaded dependencies
+installer/payload/
+installer/dist/
+installer/downloads/
+
+# Editor/agent scaffolding (regenerate with `openspec update`)
+.claude/
+
+# OS noise
+Thumbs.db
+.DS_Store
