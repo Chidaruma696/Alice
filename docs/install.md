@@ -1,0 +1,106 @@
+# Installing Alice on Windows
+
+## Requirements
+
+- Windows 10 or 11 (64-bit), administrator rights for the installer.
+- The ticket printer installed on this PC (USB, LPT, or a network share from another PC). It does **not** need to be shared.
+- Stations on the same LAN that open URLs from a browser or any HTTP client.
+
+Nothing else: the installer bundles PHP, the service wrapper, and the raw-print helper.
+
+## Install
+
+1. Run `Alice-<version>-setup.exe` (English or Spanish).
+2. **HTTP port**: keep `80` so stations use `http://alice/` with no port. If another program already listens on 80 (IIS, Skype, another web server) the installer warns and lets you pick e.g. `8080`; stations then use `http://alice:8080/`.
+3. **Computer name** (optional): tick it to rename this PC to `alice` (or any name). Stations can then reach it as `http://alice/`. The name applies after the next restart; the installer never restarts the PC.
+4. Finish. The service **Alice** is installed, started, set to start at boot, and a firewall rule "Alice" opens the port on private and domain networks. "Alice panel" in the Start menu (and optionally the desktop) opens `http://localhost:<port>/`.
+
+## First configuration
+
+In the panel:
+
+1. **Printers installed on this PC** lists what Windows knows. Click **Add** next to the ticket printer. It is registered as kind `local` and becomes the default printer.
+2. Click **Test page**. If the printer prints, you are done with the server.
+3. Open the panel from a cash register (`http://alice/` or `http://<server IP>/`): the station appears under **Stations** the first time it prints. Give it a name; leave its printer empty to use the default, or pick one.
+4. Optional: set an **Admin PIN** so only the person in charge can change things. Printing never asks for the PIN.
+
+Give the stations fixed IPs (DHCP reservations on the router). Alice identifies a station by IP; if an IP changes, the station shows up as new and uses the default printer until assigned again.
+
+## Name resolution for stations
+
+Stations need to reach the server. Pick one:
+
+- **Computer rename** (installer option or *Settings → System → About → Rename*): Windows name resolution on a LAN lets other Windows PCs open `http://alice/` with no further setup.
+- **Router DNS entry**: most office routers allow a static host → IP entry; add `alice` → the server's IP (shown in the panel's status block).
+- **`hosts` file** on each station (`C:\Windows\System32\drivers\etc\hosts`): `172.18.1.7 alice`. Works, but it is what Alice was built to avoid; use it only if the router cannot.
+- **Plain IP**: point the sales system at `http://172.18.1.7/`.
+
+## Where things are
+
+| path | what |
+|------|------|
+| `C:\Program Files\Alice\` | application, `php\`, `alice-service.exe` + `alice-service.xml` |
+| `...\data\` | `printers.json`, `stations.json`, `config.json`, `jobs.jsonl`, `spool\`, `last\`, `logs\` |
+| `...\adapters\` | `example\` (shipped) and your `office\` adapter |
+| `...\data\logs\` | `alice-service.out.log` / `.err.log` (PHP server output), `alice-service.wrapper.log` (service events, restarts), `php-error.log` |
+
+## Upgrade
+
+Run the newer installer over the existing installation. It stops the service, replaces the application and the PHP runtime, keeps `data\` and `adapters\` (only `adapters\example` is refreshed), keeps the port, and restarts the service.
+
+## Uninstall
+
+*Settings → Apps → Alice* or the Start-menu entry. The uninstaller stops and removes the service, the firewall rule and the shortcuts, then asks whether to keep `data\` and `adapters\` (default: keep).
+
+## Dry-run mode
+
+The panel's status block has a **Switch to …** button that toggles dry-run: jobs are written to `data\spool\<job>.prn` instead of the printer, useful to inspect what an adapter produces. On Linux dry-run is always on.
+
+## Running without the installer (development)
+
+```sh
+php -S 0.0.0.0:8080 -t public public/router.php          # Linux: dry-run automatically
+ALICE_DRY_RUN=1 php -S 127.0.0.1:8080 -t public public/router.php   # Windows, forced dry-run
+php tests/run.php                                          # test suite (~1 s)
+```
+
+Environment variables: `ALICE_DATA_DIR` (data folder), `ALICE_DRY_RUN` (`1`/`0`), `ALICE_PORT` (shown in the panel).
+
+### Smoke test (checked on 0.1.0)
+
+With the server above in dry-run and a browser on `http://127.0.0.1:8080/`:
+
+- [x] Add a printer by hand (`Front desk`, destination `LPT1`) → appears as registered, kind `port`, default.
+- [x] **Test page** → flash "Sent (job …)", job listed as `sent · dry run`, file in `data/spool/`.
+- [x] Open `/printer/sample.php?n=1` → result page "Sent to Front desk (dry run …)", **Print again** reprints, **Change printer** opens the selector.
+- [x] Station row for `127.0.0.1` appears; rename it and pick a printer → saved on change.
+- [x] Language switch (top right) → Spanish, persists on reload; `Accept-Language: es` renders Spanish by default.
+- [x] Set a PIN → mutating buttons redirect to `/pin`; after unlocking they work; `POST /api/print` works without it.
+
+## Building the installer
+
+On a Windows PC with [Inno Setup 6](https://jrsoftware.org/isinfo.php):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File installer\build.ps1
+```
+
+The script downloads the PHP zip and WinSW pinned in `installer\deps.json`, verifies their SHA-256 (a mismatch aborts with the file name and no installer is produced), stages `installer\payload\`, checks that the bundled PHP loads the required extensions, and compiles `installer\dist\Alice-<version>-setup.exe`. Add `-SkipCompile` to stage only.
+
+## Troubleshooting
+
+**"The printer name is invalid" / "OpenPrinter … error 1801"** — the registered `local` destination does not match the installed name exactly. Refresh the installed list in the panel and add the printer from there.
+
+**"Access is denied" on a local printer** — the service runs as *Local System*, which can print to local printers. If the printer was installed per-user (some USB installers do that), reinstall it for all users, or register it by share (`\\PC\Share`) as a fallback.
+
+**Raw print helper blocked (AppLocker / antivirus)** — the panel shows the exact PowerShell error. Share the printer and register it again with destination `\\localhost\ShareName` (kind `unc`), which uses `copy /b` instead of the helper.
+
+**UNC destination fails: "The network path was not found"** — the share name is wrong, or the other PC is off. Test with `copy /b C:\Windows\win.ini \\PC\Share` from the server.
+
+**Port already in use** — `netstat -ano | findstr :80` shows the PID; stop that program or reinstall Alice on another port. Change the port in `alice-service.xml` (two places) and run `alice-service.exe restart` as administrator, then fix the firewall rule to match.
+
+**Service does not start** — read `data\logs\alice-service.err.log` and `alice-service.wrapper.log`. Run `php\php.exe -c php\php.ini -S 127.0.0.1:8080 -t public public\router.php` from the install folder to see errors directly.
+
+**Stations cannot reach the server** — from a station, `ping alice` / `ping <IP>`. Check that the PC is on a *Private* network profile (the firewall rule is for private and domain), and that the router does not isolate clients (common on guest Wi-Fi).
+
+**Wrong accents on the ticket** — the printer's character table and the document encoding disagree. See *Character sets* in [adapters.md](adapters.md).

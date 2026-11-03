@@ -1,0 +1,5 @@
+[
+  {"Name":"EPSON LX-350","PortName":"USB001","Shared":false,"DriverName":"EPSON LX-350"},
+  {"Name":"Microsoft Print to PDF","PortName":"PORTPROMPT:","Shared":false,"DriverName":"Microsoft Print To PDF"},
+  {"Name":"Tickets (shared)","PortName":"LPT1:","Shared":true,"DriverName":"Generic / Text Only"}
+]

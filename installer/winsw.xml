@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  WinSW service definition for Alice. The installer copies this file next to
+  alice-service.exe as alice-service.xml, replacing {{PORT}} with the chosen
+  HTTP port. %BASE% is the directory that holds alice-service.exe.
+-->
+<service>
+  <id>Alice</id>
+  <name>Alice print server</name>
+  <description>LAN print server for ESC/P ticket printers. Panel: http://localhost:{{PORT}}/</description>
+
+  <executable>%BASE%\php\php.exe</executable>
+  <arguments>-c "%BASE%\php\php.ini" -S 0.0.0.0:{{PORT}} -t "%BASE%\public" "%BASE%\public\router.php"</arguments>
+  <workingdirectory>%BASE%</workingdirectory>
+
+  <env name="ALICE_PORT" value="{{PORT}}"/>
+  <env name="ALICE_DATA_DIR" value="%BASE%\data"/>
+
+  <startmode>Automatic</startmode>
+  <onfailure action="restart" delay="10 sec"/>
+  <resetfailure>1 hour</resetfailure>
+  <stoptimeout>10 sec</stoptimeout>
+  <priority>Normal</priority>
+
+  <logpath>%BASE%\data\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>2048</sizeThreshold>
+    <keepFiles>5</keepFiles>
+  </log>
+</service>
