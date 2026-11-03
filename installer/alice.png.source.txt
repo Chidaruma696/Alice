@@ -1,0 +1,6 @@
+alice.png — source and licence note
+Downloaded 2026-11-03 from https://www.cursor.cc/cursor/624/117/cursor.png
+Page: https://www.cursor.cc/?action=icon&file_id=117624 ("Alice Margatroid Cursor",
+uploaded by user "aloyebabo", listed as "License: Creative Commons, no attribution").
+32x32 px. The original artist is not named on that page.
+Used as the installer / shortcut / control-window icon (installer\make-icon.ps1 builds alice.ico from it).
