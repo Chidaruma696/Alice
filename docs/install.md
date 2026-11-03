@@ -32,6 +32,8 @@ In the panel:
 3. Open the panel from a cash register (`http://alice/` or `http://<server IP>/`): the station appears under **Stations** the first time it prints. Give it a name; leave its printer empty to use the default, or pick one.
 4. Optional: set an **Admin PIN** so only the person in charge can change things. Printing never asks for the PIN.
 
+5. **Office adapter**: copy your `adapters\office\` folder (the one that serves the sales system's URLs, see [adapters.md](adapters.md)) into `C:\Program Files\Alice\adapters\office\` and restart the service from the control window. The panel's adapter list must show it with a green check; from then on `http://alice/printer/imprime_nota.php?id_nota=N` prints on the printer of the station that opens it.
+
 Give the stations fixed IPs (DHCP reservations on the router). Alice identifies a station by IP; if an IP changes, the station shows up as new and uses the default printer until assigned again.
 
 ## Name resolution for stations

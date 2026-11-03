@@ -64,6 +64,8 @@
 - [ ] 8.1 Build the installer with `installer/build.ps1` on a Windows PC with Inno Setup, install on a test port, confirm the service starts at boot, the firewall rule exists, shortcuts open the panel, and uninstall keeps `data/`; record results in `CHANGELOG.md` for 0.1.0.
 - [ ] 8.2 Register the USB printer as `local` without sharing it, print the test page and a sample adapter ticket from another PC on the LAN, confirm bytes match the dry-run spool file; confirm `unc` destination works against a shared printer if one exists.
 - [ ] 8.3 Create `adapters/office/` from the example, point a cash register's sales system at Alice, print a real sale ticket, and compare it with the old module's `tmp/ultimo_nota.prn`; adjust the adapter until identical.
+  - [x] 8.3a `adapters/office/` written (outside git) as a port of `htdocs\printer-nuevo` (`lib\datos.php`, `lib\tickets.php`, `core\class_impresora.php`): routes `printer/imprime_nota.php` and `printer/imprime_edo_cuenta_cliente.php`, same queries via PDO with `charset=latin1`, same ESC/P bytes. Verified byte-identical to `printer-nuevo` on sample data for both documents; amounts in words agree on 2534 of 2538 tested values, the 4 others being the old code's "MIL CIENTO PESOS" where Alice prints the correct "MIL CIEN PESOS".
+  - [ ] 8.3b On the server: copy the folder to `adapters\office\`, restart, print a real note from a cash register and compare with `printer-nuevo\tmp\ultimo_nota.prn` (bytes must match except the amount-in-words fix above).
 
 ## Workflow follow-up
 
