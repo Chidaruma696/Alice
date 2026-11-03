@@ -104,8 +104,14 @@ foreach ($file in @('LICENSE', 'README.md', 'README.es.md', 'CHANGELOG.md')) {
     $src = Join-Path $root $file
     if (Test-Path $src) { Copy-Item $src (Join-Path $payload 'app') -Force }
 }
-New-Item -ItemType Directory -Force (Join-Path $payload 'adapters\example') | Out-Null
-Copy-Item (Join-Path $root 'adapters\example\*') (Join-Path $payload 'adapters\example') -Recurse -Force
+# Every adapters\<name>\ present in this checkout ships inside the installer (example always;
+# office adapters only exist locally, so a build from a clean clone bundles just the example).
+$adapterDirs = Get-ChildItem (Join-Path $root 'adapters') -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'adapter.php') }
+foreach ($dir in $adapterDirs) {
+    New-Item -ItemType Directory -Force (Join-Path $payload "adapters\$($dir.Name)") | Out-Null
+    Copy-Item (Join-Path $dir.FullName '*') (Join-Path $payload "adapters\$($dir.Name)") -Recurse -Force
+}
+Write-Host "staging adapters: $(($adapterDirs | ForEach-Object { $_.Name }) -join ', ')"
 
 # sanity: the bundled PHP runs the app
 $checkScript = Join-Path $payload 'check.php'

@@ -32,7 +32,7 @@ In the panel:
 3. Open the panel from a cash register (`http://alice/` or `http://<server IP>/`): the station appears under **Stations** the first time it prints. Give it a name; leave its printer empty to use the default, or pick one.
 4. Optional: set an **Admin PIN** so only the person in charge can change things. Printing never asks for the PIN.
 
-5. **Office adapter**: copy your `adapters\office\` folder (the one that serves the sales system's URLs, see [adapters.md](adapters.md)) into `C:\Program Files\Alice\adapters\office\` and restart the service from the control window. The panel's adapter list must show it with a green check; from then on `http://alice/printer/imprime_nota.php?id_nota=N` prints on the printer of the station that opens it.
+5. **Office adapter**: if the installer was built with it (see *Building the installer*) it is already in `adapters\office\`; otherwise copy your `adapters\office\` folder (the one that serves the sales system's URLs, see [adapters.md](adapters.md)) into `C:\Program Files\Alice\adapters\office\` and restart the service from the control window. The panel's adapter list must show it with a green check; from then on `http://alice/printer/imprime_nota.php?id_nota=N` prints on the printer of the station that opens it.
 
 Give the stations fixed IPs (DHCP reservations on the router). Alice identifies a station by IP; if an IP changes, the station shows up as new and uses the default printer until assigned again.
 
@@ -96,6 +96,8 @@ powershell -ExecutionPolicy Bypass -File installer\build.ps1
 ```
 
 The icon is drawn by `installer\make-icon.ps1` (an original doll motif in Alice Margatroid's colours; fan art found online is copyrighted by its artist even when it is free to view). To use an image you have the rights to, save it as `installer\alice.png` (square works best) and the build makes `alice.ico` from it.
+
+Every `adapters\<name>\` folder of the checkout that has an `adapter.php` goes into the installer: `example` always, and your office adapter when you build on the PC that has it. An installer built that way carries the adapter's `config.php` (database credentials), so keep it private. On upgrade the adapter code is replaced; the server's `config.php` is kept if it already exists.
 
 The script downloads the PHP zip, WinSW (.NET Framework build) and the Microsoft Visual C++ runtime installer pinned in `installer\deps.json`, verifies their SHA-256 (a mismatch aborts with the file name and no installer is produced), stages `installer\payload\`, checks that the bundled PHP loads the required extensions, and compiles `installer\dist\Alice-<version>-setup.exe`. Add `-SkipCompile` to stage only.
 

@@ -111,8 +111,30 @@ Source: "alice.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "payload\alice-service.xml.template"; DestDir: "{app}"; Flags: ignoreversion
 ; Microsoft Visual C++ 2015-2022 runtime: php.exe needs it and a clean Windows does not have it.
 Source: "payload\VC_redist.x64.exe"; DestDir: "{tmp}"; Check: NeedsVcRuntime
-; The example adapter is updated on upgrade; every other adapters\* directory is never touched.
+; The example adapter is updated on upgrade. Any other adapter staged by build.ps1 (an office
+; adapter present in the build checkout) is installed too: its code is refreshed on upgrade,
+; its config.php is only written when the server has none, so local edits survive.
 Source: "payload\adapters\example\*"; DestDir: "{app}\adapters\example"; Flags: ignoreversion recursesubdirs createallsubdirs
+#define AdaptersDir "payload\adapters"
+#define FindHandle
+#define FindResult
+#define AdapterName
+#sub AdapterEntry
+  #define AdapterName FindGetFileName(FindHandle)
+  #if AdapterName != "example" && AdapterName != "." && AdapterName != ".."
+    #if FileExists(AdaptersDir + "\" + AdapterName + "\adapter.php")
+      #pragma message "bundling adapter " + AdapterName
+Source: "{#AdaptersDir}\{#AdapterName}\*"; DestDir: "{app}\adapters\{#AdapterName}"; Excludes: "config.php"; Flags: ignoreversion recursesubdirs createallsubdirs
+      #if FileExists(AdaptersDir + "\" + AdapterName + "\config.php")
+Source: "{#AdaptersDir}\{#AdapterName}\config.php"; DestDir: "{app}\adapters\{#AdapterName}"; Flags: onlyifdoesntexist
+      #endif
+    #endif
+  #endif
+#endsub
+#for {FindHandle = FindResult = FindFirst(AdaptersDir + "\*", faDirectory); FindResult; FindResult = FindNext(FindHandle)} AdapterEntry
+#if FindHandle
+  #expr FindClose(FindHandle)
+#endif
 
 [Icons]
 Name: "{group}\Alice"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\tools\alice-tray.ps1"""; WorkingDir: "{app}"; IconFilename: "{app}\alice.ico"; Comment: "{cm:ControlShortcutComment}"

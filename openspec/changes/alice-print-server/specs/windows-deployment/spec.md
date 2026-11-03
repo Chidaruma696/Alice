@@ -57,6 +57,13 @@ The installer SHALL create Start-menu entries "Alice panel" (opens the panel in 
 - **WHEN** the user clicks "Alice panel"
 - **THEN** the default browser opens `http://localhost:<port>/`
 
+### Requirement: Adapters present at build time ship in the installer
+The build SHALL include every `adapters/<name>/` of the checkout that has an `adapter.php`; on install the adapter code is written and, for adapters other than `example`, an existing `config.php` on the target is kept, so an installer built on the office PC deploys the office adapter and a reinstall does not lose local configuration edits.
+
+#### Scenario: Reinstall with the office adapter bundled
+- **WHEN** an installer built on a checkout containing `adapters/office/` runs on the server
+- **THEN** `adapters\office\adapter.php` and `config.php` exist after install, the panel lists the `office` adapter, and running the same installer again keeps a `config.php` edited on the server
+
 ### Requirement: Upgrade keeps data
 Running a newer installer over an existing installation SHALL replace the application and runtime, keep `data/`, `adapters/`, and the configuration, and restart the service.
 
