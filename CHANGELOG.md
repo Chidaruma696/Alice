@@ -11,7 +11,7 @@ First version, implementing the `alice-print-server` change in `openspec/`.
 - Host adapters loaded from `adapters/*/adapter.php` with ESC/P helpers (`Escp\Builder`, `SpanishNumbers`); `adapters/example` ships, office adapters are git-ignored.
 - Dry-run mode (automatic outside Windows) writes jobs to `data/spool/`.
 - Desktop control window and tray icon (`tools/alice-tray.ps1`): Start/Stop/Restart, status light, log tail, development mode with `php -S`.
-- Windows deployment: Inno Setup installer bundling PHP 8.3 and WinSW, service with auto-restart, firewall rule, port and computer-name pages, shortcuts, data-preserving upgrade and uninstall.
+- Windows deployment: Inno Setup installer bundling PHP 8.3, the Microsoft Visual C++ runtime (installed only when missing) and WinSW, service with auto-restart, firewall rule, port and computer-name pages, `/PORT=` for silent installs, shortcuts, data-preserving upgrade and uninstall. Post-install steps are exit-code checked and report the failing step and the setup log; the control window offers "Install and start" when the service is missing.
 - Test suite: `php tests/run.php` (in-process, no sockets).
 
 Windows verification (tasks 8.1–8.3 in `openspec/changes/alice-print-server/tasks.md`): pending.

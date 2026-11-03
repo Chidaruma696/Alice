@@ -6,7 +6,9 @@
 - The ticket printer installed on this PC (USB, LPT, or a network share from another PC). It does **not** need to be shared.
 - Stations on the same LAN that open URLs from a browser or any HTTP client.
 
-Nothing else: the installer bundles PHP, the service wrapper, and the raw-print helper.
+Nothing else: the installer bundles PHP, the Microsoft Visual C++ runtime PHP needs (installed silently only if the PC does not have it), the service wrapper, and the raw-print helper. A clean Windows needs no download.
+
+Silent install (deployment scripts): `Alice-<version>-setup.exe /VERYSILENT /NORESTART /PORT=80 /LOG="C:\alice-setup.log"`. Without `/PORT` a silent install keeps the port of an existing installation, else 80.
 
 ## Install
 
@@ -93,7 +95,7 @@ powershell -ExecutionPolicy Bypass -File installer\build.ps1
 
 The icon is drawn by `installer\make-icon.ps1` (an original doll motif in Alice Margatroid's colours; fan art found online is copyrighted by its artist even when it is free to view). To use an image you have the rights to, save it as `installer\alice.png` (square works best) and the build makes `alice.ico` from it.
 
-The script downloads the PHP zip and WinSW pinned in `installer\deps.json`, verifies their SHA-256 (a mismatch aborts with the file name and no installer is produced), stages `installer\payload\`, checks that the bundled PHP loads the required extensions, and compiles `installer\dist\Alice-<version>-setup.exe`. Add `-SkipCompile` to stage only.
+The script downloads the PHP zip, WinSW (.NET Framework build) and the Microsoft Visual C++ runtime installer pinned in `installer\deps.json`, verifies their SHA-256 (a mismatch aborts with the file name and no installer is produced), stages `installer\payload\`, checks that the bundled PHP loads the required extensions, and compiles `installer\dist\Alice-<version>-setup.exe`. Add `-SkipCompile` to stage only.
 
 ## Troubleshooting
 
@@ -106,6 +108,8 @@ The script downloads the PHP zip and WinSW pinned in `installer\deps.json`, veri
 **UNC destination fails: "The network path was not found"** — the share name is wrong, or the other PC is off. Test with `copy /b C:\Windows\win.ini \\PC\Share` from the server.
 
 **Port already in use** — `netstat -ano | findstr :80` shows the PID; stop that program or reinstall Alice on another port. Change the port in `alice-service.xml` (two places) and run `alice-service.exe restart` as administrator, then fix the firewall rule to match.
+
+**"Service not installed" in the control window** — a post-install step failed. The installer shows which one and its exit code; the full setup log is in `%TEMP%\Setup Log <date> #<n>.txt` (or the file given with `/LOG=`). Press **Install and start** in the control window to register the service again under elevation (it needs `alice-service.xml` next to `alice-service.exe`, written by the installer). If PHP itself does not start, check that *Microsoft Visual C++ 2015-2022 Redistributable (x64)* appears in *Settings → Apps*; the installer adds it when missing.
 
 **Service does not start** — read `data\logs\alice-service.err.log` and `alice-service.wrapper.log`. Run `php\php.exe -c php\php.ini -S 127.0.0.1:8080 -t public public\router.php` from the install folder to see errors directly.
 

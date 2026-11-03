@@ -7,14 +7,22 @@ Lets a non-technical person install Alice on the PC that has the printer, have i
 ## ADDED Requirements
 
 ### Requirement: Self-contained installer
-The system SHALL ship as a single Inno Setup installer (`Alice-<version>-setup.exe`) that bundles the PHP runtime, the application, the service wrapper, and the raw-print helper, requiring no other software on the target PC.
+The system SHALL ship as a single Inno Setup installer (`Alice-<version>-setup.exe`) that bundles the PHP runtime, the Microsoft Visual C++ runtime PHP depends on (installed silently only when the PC lacks it), the application, the service wrapper (the .NET Framework build, present on every Windows 10/11), and the raw-print helper, requiring no other software on the target PC.
+
+#### Scenario: Clean Windows PC
+- **WHEN** the installer runs on a freshly installed Windows 10/11 with no developer tools or runtimes
+- **THEN** the Visual C++ runtime is installed, the service is registered and running, and the panel answers on the chosen port without downloading anything
 
 #### Scenario: Clean PC
 - **WHEN** the installer runs on a Windows 10/11 PC with nothing else installed
 - **THEN** after it finishes the panel answers at `http://localhost/` from a browser
 
 ### Requirement: Runs as a Windows service
-The installer SHALL register Alice as a Windows service that starts automatically at boot, runs without a logged-in user, restarts within 10 seconds if the process exits, and writes its output to a log file under the install directory.
+The installer SHALL register Alice as a Windows service that starts automatically at boot, runs without a logged-in user, restarts within 10 seconds if the process exits, and writes its output to a log file under the install directory. The installer SHALL check the exit code of each post-install step (runtime, firewall rule, service registration, service start) and, when one fails, tell the operator which step failed, the exit code, and where the log is, instead of finishing as if everything succeeded.
+
+#### Scenario: Service registration fails
+- **WHEN** the service wrapper cannot register the service (e.g. a security product blocks it)
+- **THEN** setup shows the failed step and its exit code, points at the setup log, and the control window later offers "Install and start" to retry under elevation
 
 #### Scenario: Reboot
 - **WHEN** the PC restarts and nobody logs in
@@ -71,7 +79,7 @@ The deployment SHALL include a PowerShell helper that writes a file to a named l
 - **THEN** raw printing still works because the helper is run with `-ExecutionPolicy Bypass`
 
 ### Requirement: Build script
-The repository SHALL include a build script that downloads the pinned PHP zip and service wrapper, verifies their SHA-256, assembles the payload, and compiles the installer, so a release can be produced on any Windows PC with Inno Setup.
+The repository SHALL include a build script that downloads the pinned PHP zip, service wrapper, and Visual C++ runtime installer, verifies their SHA-256, assembles the payload, and compiles the installer, so a release can be produced on any Windows PC with Inno Setup. The installer SHALL accept `/PORT=<n>` on the command line so silent installs (`/VERYSILENT`) get a port without the wizard page.
 
 #### Scenario: Checksum mismatch
 - **WHEN** a downloaded dependency does not match its pinned hash

@@ -70,6 +70,7 @@ function Get-Dependency($dep) {
 
 $phpZip = Get-Dependency $deps.php
 $winsw = Get-Dependency $deps.winsw
+$vcredist = Get-Dependency $deps.vcredist
 
 # --- payload -------------------------------------------------------------------
 if (Test-Path $payload) {
@@ -87,6 +88,9 @@ if (-not (Test-Path (Join-Path $payload 'php\php.exe'))) { Fail 'php.exe missing
 Write-Host 'staging service wrapper'
 Copy-Item $winsw (Join-Path $payload 'alice-service.exe') -Force
 Copy-Item (Join-Path $installer 'winsw.xml') (Join-Path $payload 'alice-service.xml.template') -Force
+
+Write-Host 'staging Visual C++ runtime installer'
+Copy-Item $vcredist (Join-Path $payload 'VC_redist.x64.exe') -Force
 
 Write-Host 'drawing icon'
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $installer 'make-icon.ps1') -Out (Join-Path $installer 'alice.ico') | Out-Null

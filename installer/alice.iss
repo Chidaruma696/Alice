@@ -58,6 +58,12 @@ en.LogsShortcut=Alice logs
 en.UninstallKeepData=Keep the data folder (printers, stations, jobs) and the adapters folder?%n%nChoose No to delete them.
 en.FirewallMsg=Configuring the firewall...
 en.ServiceMsg=Installing the Alice service...
+en.StartMsg=Starting the Alice service...
+en.RuntimeMsg=Installing the Microsoft Visual C++ runtime (needed by PHP)...
+en.RuntimeFailed=The Microsoft Visual C++ runtime could not be installed (code %1). PHP will not start without it. Install "Microsoft Visual C++ 2015-2022 Redistributable (x64)" from Microsoft and then start Alice from its control window.
+en.ServiceInstallFailed=The Alice service could not be installed (code %1). Open the Alice control window and press Start to try again; details are in the setup log:%n%2
+en.ServiceStartFailed=The Alice service was installed but did not start (code %1). Check the files in %2 and press Start in the Alice control window.
+en.ServiceNotRunning=The Alice service was installed but is not running. Check the files in %1 and press Start in the Alice control window.
 es.PortPageCaption=Puerto HTTP
 es.PortPageDescription=Las estaciones imprimen abriendo http://<esta PC>:<puerto>/
 es.PortPageSub=El puerto 80 permite a las estaciones usar http://alice/ sin puerto en la dirección. Cámbialo solo si otro programa ya usa el puerto 80.
@@ -79,6 +85,12 @@ es.LogsShortcut=Registros de Alice
 es.UninstallKeepData=¿Conservar la carpeta de datos (impresoras, estaciones, trabajos) y la carpeta de adaptadores?%n%nElige No para borrarlas.
 es.FirewallMsg=Configurando el firewall...
 es.ServiceMsg=Instalando el servicio de Alice...
+es.StartMsg=Iniciando el servicio de Alice...
+es.RuntimeMsg=Instalando el runtime de Microsoft Visual C++ (lo necesita PHP)...
+es.RuntimeFailed=No se pudo instalar el runtime de Microsoft Visual C++ (código %1). PHP no arrancará sin él. Instala "Microsoft Visual C++ 2015-2022 Redistributable (x64)" desde Microsoft y luego inicia Alice desde su ventana de control.
+es.ServiceInstallFailed=No se pudo instalar el servicio de Alice (código %1). Abre la ventana de control de Alice y pulsa Iniciar para reintentar; los detalles están en el registro del instalador:%n%2
+es.ServiceStartFailed=El servicio de Alice se instaló pero no arrancó (código %1). Revisa los archivos en %2 y pulsa Iniciar en la ventana de control de Alice.
+es.ServiceNotRunning=El servicio de Alice se instaló pero no está en ejecución. Revisa los archivos en %1 y pulsa Iniciar en la ventana de control de Alice.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -97,6 +109,8 @@ Source: "payload\app\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs c
 Source: "payload\alice-service.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "alice.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "payload\alice-service.xml.template"; DestDir: "{app}"; Flags: ignoreversion
+; Microsoft Visual C++ 2015-2022 runtime: php.exe needs it and a clean Windows does not have it.
+Source: "payload\VC_redist.x64.exe"; DestDir: "{tmp}"; Check: NeedsVcRuntime
 ; The example adapter is updated on upgrade; every other adapters\* directory is never touched.
 Source: "payload\adapters\example\*"; DestDir: "{app}\adapters\example"; Flags: ignoreversion recursesubdirs createallsubdirs
 
@@ -109,10 +123,8 @@ Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\Alice"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\tools\alice-tray.ps1"""; WorkingDir: "{app}"; IconFilename: "{app}\alice.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "netsh"; Parameters: "advfirewall firewall delete rule name=""{#ServiceName}"""; Flags: runhidden; StatusMsg: "{cm:FirewallMsg}"
-Filename: "netsh"; Parameters: "advfirewall firewall add rule name=""{#ServiceName}"" dir=in action=allow protocol=TCP localport={code:GetPort} profile=private,domain"; Flags: runhidden; StatusMsg: "{cm:FirewallMsg}"
-Filename: "{app}\alice-service.exe"; Parameters: "install"; Flags: runhidden; StatusMsg: "{cm:ServiceMsg}"
-Filename: "{app}\alice-service.exe"; Parameters: "start"; Flags: runhidden; StatusMsg: "{cm:ServiceMsg}"
+; Runtime, firewall rule and service are set up in [Code] (CurStepChanged/ssPostInstall)
+; so that each step's exit code is checked and reported; [Run] entries ignore exit codes.
 Filename: "powershell"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ""Rename-Computer -NewName '{code:GetComputerName}' -Force"""; Flags: runhidden; Check: WantsRename
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\tools\alice-tray.ps1"""; WorkingDir: "{app}"; Description: "{cm:OpenControl}"; Flags: postinstall nowait skipifsilent runasoriginaluser
 
@@ -157,6 +169,37 @@ var
   Code: Integer;
 begin
   Result := Exec('sc.exe', 'query {#ServiceName}', '', SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0);
+end;
+
+function ServiceRunning: Boolean;
+var
+  Code: Integer;
+begin
+  Result := Exec(ExpandConstant('{cmd}'), '/c sc query {#ServiceName} | findstr /c:"RUNNING" >nul', '', SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0);
+end;
+
+{ The PHP build (vs16) needs the Visual C++ 2015-2022 x64 runtime, i.e. 14.20 or newer. }
+function NeedsVcRuntime: Boolean;
+var
+  Installed, Minor: Cardinal;
+begin
+  Result := True;
+  if RegQueryDWordValue(HKLM64, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Installed', Installed)
+    and RegQueryDWordValue(HKLM64, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Minor', Minor) then
+    Result := not ((Installed = 1) and (Minor >= 20));
+  Log(Format('Visual C++ runtime needed: %d', [Integer(Result)]));
+end;
+
+{ /PORT=8080 on the command line pre-fills the port page and is used by silent installs. }
+function InitializeSetup: Boolean;
+begin
+  ChosenPort := Trim(ExpandConstant('{param:PORT|}'));
+  if (ChosenPort <> '') and ((StrToIntDef(ChosenPort, 0) < 1) or (StrToIntDef(ChosenPort, 0) > 65535)) then
+  begin
+    Log('ignoring invalid /PORT=' + ChosenPort);
+    ChosenPort := '';
+  end;
+  Result := True;
 end;
 
 { Previous port from the service XML of an existing installation, else 80. }
@@ -230,7 +273,12 @@ end;
 procedure CurPageChanged(CurPageID: Integer);
 begin
   if CurPageID = PortPage.ID then
-    PortPage.Values[0] := PreviousPort;
+  begin
+    if ChosenPort <> '' then
+      PortPage.Values[0] := ChosenPort
+    else
+      PortPage.Values[0] := PreviousPort;
+  end;
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -297,12 +345,76 @@ begin
   end;
 end;
 
+{ Runs a command hidden, logs the exit code, returns True when it ran and exited with 0. }
+function RunStep(const Exe, Params, StatusMsg: String; var Code: Integer): Boolean;
+begin
+  WizardForm.StatusLabel.Caption := StatusMsg;
+  Log(Format('run: "%s" %s', [Exe, Params]));
+  Result := Exec(Exe, Params, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, Code);
+  if not Result then
+  begin
+    Log('  could not start: ' + SysErrorMessage(Code));
+    exit;
+  end;
+  Log(Format('  exit code %d', [Code]));
+  Result := (Code = 0);
+end;
+
+{ Visual C++ runtime, firewall rule, service registration and start, in this order,
+  each checked. [Run] entries would silently ignore a failing step. }
+procedure PostInstall;
+var
+  Code: Integer;
+  Exe, Logs: String;
+begin
+  WriteServiceXml;
+  Exe := ExpandConstant('{app}\alice-service.exe');
+  Logs := ExpandConstant('{app}\data\logs');
+
+  if NeedsVcRuntime then
+  begin
+    { 1638: a newer version is already installed; 3010: installed, reboot pending (not required for php) }
+    if not RunStep(ExpandConstant('{tmp}\VC_redist.x64.exe'), '/install /quiet /norestart', CustomMessage('RuntimeMsg'), Code)
+      and (Code <> 1638) and (Code <> 3010) then
+      SuppressibleMsgBox(FmtMessage(CustomMessage('RuntimeFailed'), [IntToStr(Code)]), mbError, MB_OK, IDOK);
+  end;
+
+  RunStep('netsh', 'advfirewall firewall delete rule name="{#ServiceName}"', CustomMessage('FirewallMsg'), Code);
+  if not RunStep('netsh', 'advfirewall firewall add rule name="{#ServiceName}" dir=in action=allow protocol=TCP localport=' + ChosenPort + ' profile=private,domain', CustomMessage('FirewallMsg'), Code) then
+    Log('firewall rule not created; stations on the LAN may be blocked');
+
+  if not RunStep(Exe, 'install', CustomMessage('ServiceMsg'), Code) then
+  begin
+    SuppressibleMsgBox(FmtMessage(CustomMessage('ServiceInstallFailed'), [IntToStr(Code), ExpandConstant('{log}')]), mbError, MB_OK, IDOK);
+    exit;
+  end;
+  if not RunStep(Exe, 'start', CustomMessage('StartMsg'), Code) then
+  begin
+    SuppressibleMsgBox(FmtMessage(CustomMessage('ServiceStartFailed'), [IntToStr(Code), Logs]), mbError, MB_OK, IDOK);
+    exit;
+  end;
+  Sleep(2500);
+  if ServiceRunning then
+    Log('service {#ServiceName} is running on port ' + ChosenPort)
+  else
+  begin
+    Log('service {#ServiceName} is not running after start');
+    SuppressibleMsgBox(FmtMessage(CustomMessage('ServiceNotRunning'), [Logs]), mbError, MB_OK, IDOK);
+  end;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssInstall then
-    StopExistingService
+  begin
+    { silent install (no port page): keep the port of an existing installation, else 80 }
+    if ChosenPort = '' then
+      ChosenPort := PreviousPort;
+    Log('port ' + ChosenPort);
+    StopExistingService;
+  end
   else if CurStep = ssPostInstall then
-    WriteServiceXml;
+    PostInstall;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

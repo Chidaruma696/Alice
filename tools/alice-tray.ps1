@@ -59,6 +59,7 @@ $S = if ($spanish) { @{
     dryRun = 'Simulación (no imprime, guarda en spool)'; log = 'Registro del servidor'; show = 'Mostrar ventana'; exit = 'Salir'
     exitRunning = 'Salir cierra solo esta ventana; el servicio sigue corriendo.'; devExit = 'Salir detendrá el servidor de desarrollo. ¿Continuar?'
     phpMissing = 'No se encontró php.exe (ni en PATH ni en php\). Instala PHP o usa el instalador de Alice.'
+    install = 'Instalar e iniciar'; xmlMissing = 'Falta alice-service.xml junto a alice-service.exe. Vuelve a ejecutar el instalador de Alice.'
     version = 'versión'; dry = 'simulación'; live = 'real'
 } } else { @{
     title = 'Alice'; running = 'Running'; stopped = 'Stopped'; starting = 'Starting…'; stopping = 'Stopping…'
@@ -68,6 +69,7 @@ $S = if ($spanish) { @{
     dryRun = 'Dry run (nothing printed, jobs go to spool)'; log = 'Server log'; show = 'Show window'; exit = 'Exit'
     exitRunning = 'Exit closes only this window; the service keeps running.'; devExit = 'Exit will stop the development server. Continue?'
     phpMissing = 'php.exe not found (not on PATH nor in php\). Install PHP or use the Alice installer.'
+    install = 'Install and start'; xmlMissing = 'alice-service.xml is missing next to alice-service.exe. Run the Alice installer again.'
     version = 'version'; dry = 'dry run'; live = 'live'
 } }
 
@@ -103,6 +105,21 @@ function Invoke-ServiceVerb([string] $verb) {
     }
 }
 
+# Service missing (installer step failed or the service was removed by hand): register it and start it
+# under a single elevation prompt. Needs alice-service.xml next to the wrapper.
+function Install-AliceService {
+    if (-not (Test-Path $serviceXml)) {
+        [System.Windows.Forms.MessageBox]::Show($S.xmlMissing, 'Alice', 'OK', 'Error') | Out-Null
+        return
+    }
+    $cmdLine = '/c ""' + $serviceExe + '" install && "' + $serviceExe + '" start"'
+    try {
+        Start-Process -FilePath 'cmd.exe' -ArgumentList $cmdLine -Verb RunAs -WindowStyle Hidden -Wait
+    } catch {
+        # UAC cancelled: nothing to do
+    }
+}
+
 function Start-Alice {
     if ($devMode) {
         if ($G.devProcess -and -not $G.devProcess.HasExited) { return }
@@ -116,6 +133,8 @@ function Start-Alice {
         if (Test-Path $ini) { $phpArgs = @('-c', $ini) + $phpArgs }
         $G.devProcess = Start-Process -FilePath $php -ArgumentList $phpArgs -WorkingDirectory $root -WindowStyle Hidden -PassThru `
             -RedirectStandardOutput (Join-Path $logsDir 'dev-server.out.log') -RedirectStandardError (Join-Path $logsDir 'dev-server.err.log')
+    } elseif ((Get-AliceState) -eq 'missing') {
+        Install-AliceService
     } else {
         Invoke-ServiceVerb 'start'
     }
@@ -340,8 +359,10 @@ function Update-View {
     $panelText = if ($panel) { "$($S.yes) - $($S.version) $($panel.version), " + $(if ($panel.dry_run) { $S.dry } else { $S.live }) } else { $S.no }
     $lblInfo.Text = "$($S.port): $Port`r`n$($S.urls): " + ($urls -join '  ') + "`r`n$($S.panel): $panelText"
 
-    $canStart = $state -in @('stopped', 'missing') -and -not ($state -eq 'missing' -and -not $devMode)
+    # 'missing' in service mode: Start registers the service first (Install-AliceService)
+    $canStart = $state -in @('stopped', 'missing')
     $btnStart.Enabled = $canStart; $miStart.Enabled = $canStart
+    $btnStart.Text = if ($state -eq 'missing' -and -not $devMode) { $S.install } else { $S.start }
     $btnStop.Enabled = ($state -eq 'running'); $miStop.Enabled = ($state -eq 'running')
     $btnRestart.Enabled = ($state -eq 'running'); $miRestart.Enabled = ($state -eq 'running')
     $btnPanel.Enabled = [bool]$panel; $miPanel.Enabled = [bool]$panel

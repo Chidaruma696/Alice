@@ -17,6 +17,10 @@ The system SHALL provide a desktop control window ("Alice") on the server PC sho
 - **WHEN** the operator clicks Start
 - **THEN** the service is started (elevating with a UAC prompt when needed) and within a few seconds the status shows "Running" in green and the panel URL answers
 
+#### Scenario: Service not registered
+- **WHEN** the operator opens the control window on an installed copy whose Windows service does not exist (a failed installer step or a service removed by hand)
+- **THEN** the status shows "Service not installed" and the Start button reads "Install and start"; pressing it registers the service with the existing `alice-service.xml` and starts it under one elevation prompt
+
 ### Requirement: Tray icon
 The control window SHALL minimise to a notification-area icon whose colour reflects the service state, with a menu offering open window, open panel, start, stop, restart, and exit; closing the window keeps the icon.
 
