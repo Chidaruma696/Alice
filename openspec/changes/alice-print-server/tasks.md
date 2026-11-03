@@ -51,6 +51,12 @@
 - [x] 7.3 Write `installer/alice.iss` (admin privileges, port page with port-in-use check, optional computer-name step, firewall rule, service install/start, shortcuts "Alice panel"/"Alice logs"/desktop optional, `onlyifdoesntexist` for `data/` and `adapters/`, uninstall with keep-data prompt); verify by review against the windows-deployment spec, with real verification in task 8.1.
 - [x] 7.4 Write `docs/install.md` (requirements, install steps, port choice, name resolution options: computer rename or router DNS static entry, hosts fallback, upgrade, uninstall, troubleshooting for spooler errors and port conflicts) and `README.md` + `README.es.md` (what Alice is, quick start, API in five lines, Touhou attribution, licence); verify the documented commands match the scripts.
 
+## 9. Desktop control window
+
+- [x] 9.1 Write `tools/alice-tray.ps1`: WinForms window (status light, port, URLs, Start/Stop/Restart, Open panel, Logs/Data/Adapters folders, log tail, 3 s refresh), `NotifyIcon` with menu and close-to-tray, bilingual strings from the Windows UI culture, development mode supervising `php -S` with a dry-run switch when no service is installed; verify by launching it from a checkout (dev mode) and exercising Start, panel, Stop.
+- [x] 9.2 Installer: Start-menu entry "Alice" (control window), task "launch at login" (default on) via the Startup folder with `-Minimized`; verify by review against the desktop-control spec, real check in 8.1.
+- [x] 9.3 Document the window in `docs/install.md` and the READMEs.
+
 ## 8. Windows verification (on the server PC, by the user)
 
 - [ ] 8.1 Build the installer with `installer/build.ps1` on a Windows PC with Inno Setup, install on a test port, confirm the service starts at boot, the firewall rule exists, shortcuts open the panel, and uninstall keeps `data/`; record results in `CHANGELOG.md` for 0.1.0.

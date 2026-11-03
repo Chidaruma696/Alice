@@ -8,7 +8,7 @@ Estado: **0.1.0 en desarrollo** — código completo, falta la verificación en 
 
 ## Inicio rápido
 
-**PC de la oficina (Windows):** ejecuta `Alice-<versión>-setup.exe`, abre el panel en `http://localhost/`, pulsa **Agregar** junto a la impresora de tickets y luego **Página de prueba**. Detalles en [`docs/install.md`](docs/install.md) (en inglés).
+**PC de la oficina (Windows):** ejecuta `Alice-<versión>-setup.exe`; se abre la ventana de control "Alice" (icono en la bandeja, Iniciar/Detener estilo Laragon); pulsa **Abrir panel**, pulsa **Agregar** junto a la impresora de tickets y luego **Página de prueba**. Detalles en [`docs/install.md`](docs/install.md) (en inglés).
 
 **Desarrollo (cualquier sistema):**
 

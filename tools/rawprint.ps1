@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Send a file to a named Windows printer as a RAW document, through the spooler.
 

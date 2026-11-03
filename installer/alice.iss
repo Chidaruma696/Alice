@@ -27,7 +27,8 @@ Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayName={#AppName} print server
-UninstallDisplayIcon={app}\alice-service.exe
+UninstallDisplayIcon={app}\alice.ico
+SetupIconFile=alice.ico
 CloseApplications=no
 SetupLogging=yes
 
@@ -49,6 +50,9 @@ en.RenameLabel=Computer name:
 en.RenameNote=The new name applies after the next restart. The installer will not restart the PC.
 en.RenameInvalid=The computer name must have 1 to 15 letters, digits or hyphens.
 en.OpenPanel=Open the Alice panel
+en.OpenControl=Open the Alice control window
+en.StartupTask=Show the Alice icon in the notification area at login
+en.ControlShortcutComment=Start, stop and watch the Alice print server
 en.PanelShortcut=Alice panel
 en.LogsShortcut=Alice logs
 en.UninstallKeepData=Keep the data folder (printers, stations, jobs) and the adapters folder?%n%nChoose No to delete them.
@@ -67,6 +71,9 @@ es.RenameLabel=Nombre del equipo:
 es.RenameNote=El nuevo nombre aplica después del próximo reinicio. El instalador no reiniciará la PC.
 es.RenameInvalid=El nombre del equipo debe tener de 1 a 15 letras, dígitos o guiones.
 es.OpenPanel=Abrir el panel de Alice
+es.OpenControl=Abrir la ventana de control de Alice
+es.StartupTask=Mostrar el icono de Alice en el área de notificación al iniciar sesión
+es.ControlShortcutComment=Iniciar, detener y vigilar el servidor de impresión Alice
 es.PanelShortcut=Panel de Alice
 es.LogsShortcut=Registros de Alice
 es.UninstallKeepData=¿Conservar la carpeta de datos (impresoras, estaciones, trabajos) y la carpeta de adaptadores?%n%nElige No para borrarlas.
@@ -75,6 +82,7 @@ es.ServiceMsg=Instalando el servicio de Alice...
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "startup"; Description: "{cm:StartupTask}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Dirs]
 Name: "{app}\data"
@@ -87,15 +95,18 @@ Name: "{app}\adapters"
 Source: "payload\php\*"; DestDir: "{app}\php"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "payload\app\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "payload\alice-service.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "alice.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "payload\alice-service.xml.template"; DestDir: "{app}"; Flags: ignoreversion
 ; The example adapter is updated on upgrade; every other adapters\* directory is never touched.
 Source: "payload\adapters\example\*"; DestDir: "{app}\adapters\example"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
+Name: "{group}\Alice"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\tools\alice-tray.ps1"""; WorkingDir: "{app}"; IconFilename: "{app}\alice.ico"; Comment: "{cm:ControlShortcutComment}"
 Name: "{group}\{cm:PanelShortcut}"; Filename: "http://localhost:{code:GetPort}/"
+Name: "{userstartup}\Alice"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\tools\alice-tray.ps1"" -Minimized"; WorkingDir: "{app}"; IconFilename: "{app}\alice.ico"; Tasks: startup
 Name: "{group}\{cm:LogsShortcut}"; Filename: "{app}\data\logs"
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{cm:PanelShortcut}"; Filename: "http://localhost:{code:GetPort}/"; Tasks: desktopicon
+Name: "{autodesktop}\Alice"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\tools\alice-tray.ps1"""; WorkingDir: "{app}"; IconFilename: "{app}\alice.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "netsh"; Parameters: "advfirewall firewall delete rule name=""{#ServiceName}"""; Flags: runhidden; StatusMsg: "{cm:FirewallMsg}"
@@ -103,7 +114,7 @@ Filename: "netsh"; Parameters: "advfirewall firewall add rule name=""{#ServiceNa
 Filename: "{app}\alice-service.exe"; Parameters: "install"; Flags: runhidden; StatusMsg: "{cm:ServiceMsg}"
 Filename: "{app}\alice-service.exe"; Parameters: "start"; Flags: runhidden; StatusMsg: "{cm:ServiceMsg}"
 Filename: "powershell"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ""Rename-Computer -NewName '{code:GetComputerName}' -Force"""; Flags: runhidden; Check: WantsRename
-Filename: "http://localhost:{code:GetPort}/"; Description: "{cm:OpenPanel}"; Flags: shellexec postinstall nowait skipifsilent
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\tools\alice-tray.ps1"""; WorkingDir: "{app}"; Description: "{cm:OpenControl}"; Flags: postinstall nowait skipifsilent runasoriginaluser
 
 [UninstallRun]
 Filename: "{app}\alice-service.exe"; Parameters: "stop"; Flags: runhidden; RunOnceId: "AliceStop"
@@ -111,6 +122,7 @@ Filename: "{app}\alice-service.exe"; Parameters: "uninstall"; Flags: runhidden; 
 Filename: "netsh"; Parameters: "advfirewall firewall delete rule name=""{#ServiceName}"""; Flags: runhidden; RunOnceId: "AliceFirewall"
 
 [UninstallDelete]
+Type: files; Name: "{userstartup}\Alice.lnk"
 Type: files; Name: "{app}\alice-service.xml"
 Type: files; Name: "{app}\alice-service.wrapper.log"
 Type: files; Name: "{app}\alice-service.err.log"

@@ -13,6 +13,7 @@ Offices with a web-based sales system and one or more ESC/P ticket printers (Eps
 - Admin panel: one bilingual (English default, Spanish) web page to manage printers, stations, test prints, and recent jobs; optional admin PIN.
 - Host adapters: the legacy URLs of the sales system (`imprime_nota.php?id_nota=N`, `imprime_edo_cuenta_cliente.php?...`) keep working through a pluggable adapter that reads the host database and builds the ESC/P ticket. The repository ships the adapter contract and an example; the real adapter for a given office lives outside the repository.
 - Windows deployment: an Inno Setup installer that bundles PHP 8, registers the service (auto-start, restart on failure), opens the firewall port, creates a Start-menu shortcut to the panel, and optionally renames the PC so stations resolve it by name without `hosts` edits.
+- Desktop control window (`tools/alice-tray.ps1`, WinForms through PowerShell, no compiler): status light, Start/Stop/Restart, open panel/logs/folders, tray icon, optional launch at login. The web panel stays the only place to configure things.
 - Dry-run mode: on non-Windows hosts (development) and when enabled, jobs are written to a spool folder instead of a printer, so the whole system is testable without hardware.
 - **BREAKING** for the old module: `impresoras.json`/`pcs.json` are replaced by Alice's own data files; nothing is migrated automatically (the office has one printer and a handful of stations, re-entered by hand in minutes).
 
@@ -25,6 +26,7 @@ Offices with a web-based sales system and one or more ESC/P ticket printers (Eps
 - `admin-panel`: the bilingual web interface for operators and its access control.
 - `host-adapters`: compatibility endpoints for host systems that print by URL, implemented through pluggable adapters kept outside the repository.
 - `windows-deployment`: installation and operation as a Windows service via the Inno Setup installer, including firewall, shortcuts, name resolution, upgrade, and uninstall.
+- `desktop-control`: a Laragon-style control window and tray icon on the server PC to start, stop, and watch the service; also runs PHP's built-in server in development mode.
 
 ### Modified Capabilities
 <!-- none: greenfield project -->

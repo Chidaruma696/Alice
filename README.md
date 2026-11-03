@@ -8,7 +8,7 @@ Status: **0.1.0 in development** — code complete, Windows verification pending
 
 ## Quick start
 
-**Office PC (Windows):** run `Alice-<version>-setup.exe`, open the panel at `http://localhost/`, click **Add** next to the ticket printer, click **Test page**. Details in [`docs/install.md`](docs/install.md).
+**Office PC (Windows):** run `Alice-<version>-setup.exe`; the "Alice" control window (tray icon, Laragon-style Start/Stop) opens; click **Open panel**, click **Add** next to the ticket printer, click **Test page**. Details in [`docs/install.md`](docs/install.md).
 
 **Developer (any OS):**
 
@@ -43,7 +43,7 @@ src/           App, Router, Store, Printers, Stations, Jobs, Auth, I18n, Escp/, 
 templates/     panel, selector, result, pin, layout
 lang/          en.php, es.php
 adapters/      example/ (shipped); your own adapters are git-ignored
-tools/         rawprint.ps1 (RAW printing through winspool.drv)
+tools/         rawprint.ps1 (RAW printing through winspool.drv), alice-tray.ps1 (control window + tray icon)
 installer/     alice.iss, build.ps1, deps.json, winsw.xml, php.ini
 tests/         run.php + one file per capability
 docs/          api.md, adapters.md, install.md

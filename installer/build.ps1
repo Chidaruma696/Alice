@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Build the Alice installer: download pinned dependencies, verify hashes,
   stage the payload, compile with Inno Setup.
@@ -85,6 +85,10 @@ Write-Host 'staging service wrapper'
 Copy-Item $winsw (Join-Path $payload 'alice-service.exe') -Force
 Copy-Item (Join-Path $installer 'winsw.xml') (Join-Path $payload 'alice-service.xml.template') -Force
 
+Write-Host 'drawing icon'
+& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $installer 'make-icon.ps1') -Out (Join-Path $installer 'alice.ico') | Out-Null
+if (-not (Test-Path (Join-Path $installer 'alice.ico'))) { Fail 'alice.ico was not generated' }
+
 Write-Host 'staging application'
 foreach ($dir in @('public', 'src', 'templates', 'lang', 'tools', 'docs')) {
     Copy-Item (Join-Path $root $dir) (Join-Path $payload "app\$dir") -Recurse -Force
@@ -97,9 +101,17 @@ New-Item -ItemType Directory -Force (Join-Path $payload 'adapters\example') | Ou
 Copy-Item (Join-Path $root 'adapters\example\*') (Join-Path $payload 'adapters\example') -Recurse -Force
 
 # sanity: the bundled PHP runs the app
-$check = & (Join-Path $payload 'php\php.exe') -c (Join-Path $payload 'php\php.ini') -r 'require $argv[1]; echo Alice\App::VERSION, " iconv=", (int) function_exists("iconv"), " mb=", (int) function_exists("mb_strlen"), " intl=", (int) class_exists("IntlTimeZone"), " pdo_mysql=", (int) in_array("mysql", PDO::getAvailableDrivers());' (Join-Path $payload 'app\src\bootstrap.php')
+$checkScript = Join-Path $payload 'check.php'
+@'
+<?php
+require __DIR__ . '/app/src/bootstrap.php';
+echo Alice\App::VERSION, ' iconv=', (int) function_exists('iconv'), ' mb=', (int) function_exists('mb_strlen'),
+    ' intl=', (int) class_exists('IntlTimeZone'), ' pdo_mysql=', (int) in_array('mysql', PDO::getAvailableDrivers()), "\n";
+'@ | Set-Content -Path $checkScript -Encoding ASCII
+$check = (& (Join-Path $payload 'php\php.exe') -c (Join-Path $payload 'php\php.ini') $checkScript 2>&1 | Out-String).Trim()
+Remove-Item $checkScript -Force
 Write-Host "bundled PHP check: $check"
-if ($check -notmatch "^$([regex]::Escape($version)) iconv=1 mb=1 intl=1") { Fail 'bundled PHP is missing a required extension (see php.ini)' }
+if (-not $check -or $check -notmatch "^$([regex]::Escape($version)) iconv=1 mb=1 intl=1 pdo_mysql=1") { Fail 'bundled PHP did not run the app or is missing a required extension (see php.ini)' }
 
 if ($SkipCompile) {
     Write-Host 'payload staged; compile skipped'

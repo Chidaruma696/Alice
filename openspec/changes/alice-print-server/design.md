@@ -66,12 +66,15 @@ src/                    App, Router, Store, I18n, Printers, Stations, Jobs, Escp
 templates/              panel.php, selector.php, result.php, pin.php, layout.php
 lang/en.php lang/es.php
 adapters/example/       sample adapter + config
-tools/rawprint.ps1
+tools/rawprint.ps1 tools/alice-tray.ps1
 installer/alice.iss installer/build.ps1 installer/deps.json installer/winsw.xml
 tests/run.php tests/*.php
 docs/api.md docs/adapters.md docs/install.md
 README.md README.es.md LICENSE CHANGELOG.md
 ```
+
+**D13. Desktop control window as a PowerShell WinForms script.**
+`tools/alice-tray.ps1` builds the window and the `NotifyIcon` with `System.Windows.Forms` and draws its own icon with `System.Drawing`, so there is nothing to compile and no binary asset to ship. It reads the port from `alice-service.xml`, queries the service with `Get-Service`, and runs `alice-service.exe start|stop|restart` through `Start-Process -Verb RunAs` (one UAC prompt per action, as the service needs admin). Without an installed service it switches to development mode and supervises `php -S` itself. Status comes from `GET /api/status` every 3 s with a 1 s timeout. Alternatives: a C# tray app (needs a compiler step and code signing to avoid SmartScreen noise), or Laragon-style Electron (far too heavy for an on/off switch).
 
 ## Risks / Trade-offs
 

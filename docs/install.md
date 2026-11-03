@@ -15,6 +15,12 @@ Nothing else: the installer bundles PHP, the service wrapper, and the raw-print 
 3. **Computer name** (optional): tick it to rename this PC to `alice` (or any name). Stations can then reach it as `http://alice/`. The name applies after the next restart; the installer never restarts the PC.
 4. Finish. The service **Alice** is installed, started, set to start at boot, and a firewall rule "Alice" opens the port on private and domain networks. "Alice panel" in the Start menu (and optionally the desktop) opens `http://localhost:<port>/`.
 
+## Control window (tray)
+
+"Alice" in the Start menu (and the icon in the notification area after login) opens a small Laragon-style window: a green/red light with the service state, the port and the URLs stations use, **Start / Stop / Restart** (each asks for administrator confirmation, the service needs it), **Open panel**, and the **Logs / Data / Adapters** folders, plus the tail of the service log so a crash or restart is visible. Closing the window keeps the tray icon; the service itself keeps running regardless of the window. Right-click the icon for the same actions.
+
+The same window runs from a git checkout without the service (`powershell -ExecutionPolicy Bypass -File tools\alice-tray.ps1 -Port 8080`): it then shows "development mode", starts `php -S` itself, and has a dry-run switch.
+
 ## First configuration
 
 In the panel:
@@ -84,6 +90,8 @@ On a Windows PC with [Inno Setup 6](https://jrsoftware.org/isinfo.php):
 ```powershell
 powershell -ExecutionPolicy Bypass -File installer\build.ps1
 ```
+
+The icon is drawn by `installer\make-icon.ps1` (an original doll motif in Alice Margatroid's colours; fan art found online is copyrighted by its artist even when it is free to view). To use an image you have the rights to, save it as `installer\alice.png` (square works best) and the build makes `alice.ico` from it.
 
 The script downloads the PHP zip and WinSW pinned in `installer\deps.json`, verifies their SHA-256 (a mismatch aborts with the file name and no installer is produced), stages `installer\payload\`, checks that the bundled PHP loads the required extensions, and compiles `installer\dist\Alice-<version>-setup.exe`. Add `-SkipCompile` to stage only.
 
