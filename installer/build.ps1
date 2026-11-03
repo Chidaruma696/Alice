@@ -72,7 +72,10 @@ $phpZip = Get-Dependency $deps.php
 $winsw = Get-Dependency $deps.winsw
 
 # --- payload -------------------------------------------------------------------
-if (Test-Path $payload) { Remove-Item $payload -Recurse -Force }
+if (Test-Path $payload) {
+    # the folder itself may be some shell's current directory; emptying it is enough
+    Get-ChildItem $payload -Force | Remove-Item -Recurse -Force
+}
 New-Item -ItemType Directory -Force (Join-Path $payload 'php') | Out-Null
 New-Item -ItemType Directory -Force (Join-Path $payload 'app') | Out-Null
 
