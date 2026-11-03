@@ -38,6 +38,13 @@ After printing from a host-adapter URL the system SHALL show a page stating succ
 - **WHEN** a cash register opens a host-adapter URL and the job is sent
 - **THEN** the page reads "Sent to <printer name>" and offers "Print again" and "Change printer"
 
+### Requirement: Legacy path tolerance
+A host system that cannot be reconfigured may address the adapter script under a different folder or letter case than the route declares (Apache on Windows served `/Printer/IMPRIME_NOTA.PHP` and `/printer-nuevo/imprime_nota.php` alike). When no route matches a request and the last path segment (compared case-insensitively) equals the last segment of exactly one adapter route, the system SHALL serve the request with that route; the query parameters and the station are those of the original request. A segment without a dot, or one matching several routes, SHALL NOT be rewritten.
+
+#### Scenario: Script called under the old folder name
+- **WHEN** the sales system opens `/printer-nuevo/imprime_nota.php?id_nota=42` and the office adapter declares `printer/imprime_nota.php`
+- **THEN** the note 42 is printed on the station's printer exactly as if `/printer/imprime_nota.php?id_nota=42` had been opened
+
 ### Requirement: Unknown print URL is explained
 When a browser requests a path that no route serves (outside `/api/`), the system SHALL answer 404 with an HTML page, in the user's language, that shows the requested URL, lists the routes of every loaded adapter as links, shows load errors of adapters that failed, and says how to add an adapter for the host's URL; the miss SHALL be written to the server log with the client IP. Under `/api/` the 404 stays JSON.
 

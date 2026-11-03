@@ -86,6 +86,21 @@ test('example adapter is loaded, its route prints a raw ticket and shows the res
     assert_true($app->stations->get('172.18.1.50') !== null, 'adapter URL registers the station');
 });
 
+test('legacy path tolerance: another folder or letter case still reaches the adapter script', function () {
+    $app = make_app();
+    add_printer($app, 'Front desk');
+    foreach (['/printer-nuevo/sample.php?n=3', '/Printer/SAMPLE.PHP?n=3', '/sample.php?n=3', '/xampp/htdocs/printer/sample.php?n=3'] as $url) {
+        $res = $app->handle(req('GET', $url, ['ip' => '172.18.1.50']));
+        assert_status(200, $res, $url);
+        assert_contains('Front desk', $res->body, $url);
+    }
+    assert_same('sent', $app->jobs->recent(1)[0]['outcome']);
+    // no file-like last segment, or no adapter script of that name: still a 404
+    foreach (['/printer/sample', '/printer/other.php?n=3', '/sample'] as $url) {
+        assert_status(404, $app->handle(req('GET', $url)), $url);
+    }
+});
+
 test('unknown print URL: HTML 404 that lists the adapter routes, JSON 404 under /api', function () {
     $app = make_app();
     $res = $app->handle(req('GET', '/printer/imprime_nota.php?id_nota=42', ['ip' => '172.18.1.50', 'headers' => ['Accept-Language' => 'es']]));

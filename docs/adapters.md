@@ -34,6 +34,8 @@ Document::text(string $utf8, string $title = '', string $encoding = 'cp850', boo
 
 Routes are registered under their declared path for both `GET` and `POST`, so legacy paths with `.php` keep working. Do not put a leading slash.
 
+A host you cannot change may call the script under another folder or letter case (`/printer-nuevo/imprime_nota.php`, `/Printer/IMPRIME_NOTA.PHP`; Apache on Windows accepted both). Alice tolerates that: when nothing matches and the last segment of the URL names exactly one adapter route, that route serves the request. A path with no file-like last segment, or a name shared by two routes, is still a 404.
+
 ## Configuration
 
 Keep settings in `adapters/<name>/config.php` returning an array, and load it from `adapter.php` (`require __DIR__ . '/config.php'`). The example uses:

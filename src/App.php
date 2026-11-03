@@ -211,6 +211,9 @@ final class App
         $this->i18n->selectFrom($request);
         try {
             $match = $this->router->match($request->method, $request->path);
+            if ($match === null && ($legacy = $this->legacyRoute($request->path)) !== null) {
+                $match = $this->router->match($request->method, $legacy);
+            }
             if ($match === null) {
                 return $this->notFound($request);
             }
@@ -238,6 +241,29 @@ final class App
                 ? Response::json(['ok' => false, 'error' => $msg], 500)
                 : Response::text("500 $msg\n", 500);
         }
+    }
+
+    /**
+     * Legacy path tolerance. A host system that cannot be changed may call the adapter's
+     * script under another folder or another letter case (`/printer-nuevo/imprime_nota.php`,
+     * `/Printer/IMPRIME_NOTA.PHP`: Apache on Windows did not care). When the last segment of
+     * the request names exactly one adapter route, that route serves it.
+     */
+    private function legacyRoute(string $path): ?string
+    {
+        $base = strtolower(basename($path));
+        if ($base === '' || !str_contains($base, '.')) {
+            return null;
+        }
+        $hits = [];
+        foreach ($this->adapters->status(false) as $adapter) {
+            foreach ($adapter['routes'] as $route) {
+                if (strtolower(basename($route)) === $base) {
+                    $hits[$route] = true;
+                }
+            }
+        }
+        return count($hits) === 1 ? (string) array_key_first($hits) : null;
     }
 
     private function notFound(Request $request): Response
