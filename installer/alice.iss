@@ -361,7 +361,10 @@ begin
 end;
 
 { Visual C++ runtime, firewall rule, service registration and start, in this order,
-  each checked. [Run] entries would silently ignore a failing step. }
+  each checked. [Run] entries would silently ignore a failing step, and Inno Setup
+  processes [Run] BEFORE CurStepChanged(ssPostInstall) (verified with 6.7.3): the
+  first release registered the service from [Run] before alice-service.xml existed,
+  so the service was never installed. }
 procedure PostInstall;
 var
   Code: Integer;

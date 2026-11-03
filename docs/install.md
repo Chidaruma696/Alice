@@ -99,6 +99,12 @@ The script downloads the PHP zip, WinSW (.NET Framework build) and the Microsoft
 
 ## Troubleshooting
 
+Start with the diagnostic script (no administrator rights needed); it prints and saves `alice-diagnose.txt` on the Desktop with the Windows and runtime versions, service and port state, whether the bundled PHP starts, and the log tails:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "C:\Program Files\Alice\tools\diagnose.ps1"
+```
+
 **"The printer name is invalid" / "OpenPrinter … error 1801"** — the registered `local` destination does not match the installed name exactly. Refresh the installed list in the panel and add the printer from there.
 
 **"Access is denied" on a local printer** — the service runs as *Local System*, which can print to local printers. If the printer was installed per-user (some USB installers do that), reinstall it for all users, or register it by share (`\\PC\Share`) as a fallback.
