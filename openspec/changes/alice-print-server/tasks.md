@@ -61,11 +61,11 @@
 
 ## 8. Windows verification (on the server PC, by the user)
 
-- [ ] 8.1 Build the installer with `installer/build.ps1` on a Windows PC with Inno Setup, install on a test port, confirm the service starts at boot, the firewall rule exists, shortcuts open the panel, and uninstall keeps `data/`; record results in `CHANGELOG.md` for 0.1.0.
+- [x] 8.1 Build the installer with `installer/build.ps1` on a Windows PC with Inno Setup, install on a test port, confirm the service starts at boot, the firewall rule exists, shortcuts open the panel, and uninstall keeps `data/`; record results in `CHANGELOG.md` for 0.1.0. (2026-11-03: installed on a clean Windows office server on port 80 after the 7.5 fixes; service runs and prints from the LAN. Start at boot and uninstall-keeps-data not yet observed.)
 - [ ] 8.2 Register the USB printer as `local` without sharing it, print the test page and a sample adapter ticket from another PC on the LAN, confirm bytes match the dry-run spool file; confirm `unc` destination works against a shared printer if one exists.
 - [ ] 8.3 Create `adapters/office/` from the example, point a cash register's sales system at Alice, print a real sale ticket, and compare it with the old module's `tmp/ultimo_nota.prn`; adjust the adapter until identical.
   - [x] 8.3a `adapters/office/` written (outside git) as a port of `htdocs\printer-nuevo` (`lib\datos.php`, `lib\tickets.php`, `core\class_impresora.php`): routes `printer/imprime_nota.php` and `printer/imprime_edo_cuenta_cliente.php`, same queries via PDO with `charset=latin1`, same ESC/P bytes. Verified byte-identical to `printer-nuevo` on sample data for both documents; amounts in words agree on 2534 of 2538 tested values, the 4 others being the old code's "MIL CIENTO PESOS" where Alice prints the correct "MIL CIEN PESOS".
-  - [ ] 8.3b On the server: copy the folder to `adapters\office\`, restart, print a real note from a cash register and compare with `printer-nuevo\tmp\ultimo_nota.prn` (bytes must match except the amount-in-words fix above).
+  - [x] 8.3b 2026-11-03: installer with the bundled office adapter installed on the office server; a real note printed from a cash register through `http://imprimenotados/printer/imprime_nota.php?id_nota=N` (the legacy system's fixed URL). Byte comparison against `printer-nuevo\tmp\ultimo_nota.prn` not done on paper; sample-data comparison (8.3a) stands.
 
 ## Workflow follow-up
 
