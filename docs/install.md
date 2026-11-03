@@ -105,6 +105,8 @@ Start with the diagnostic script (no administrator rights needed); it prints and
 powershell -ExecutionPolicy Bypass -File "C:\Program Files\Alice\tools\diagnose.ps1"
 ```
 
+**"Alice does not know this URL" (404) when the sales system prints** — the URL the sales system opens (for example `/printer/imprime_nota.php?id_nota=42`) is not a route of any adapter on this server. The 404 page lists the routes that do exist; the service log records every miss with the client IP. Only `adapters\example` ships; the office adapter that serves the real URL is written once from the old print module (see [adapters.md](adapters.md)) and dropped into `adapters\office\`. Restart the service after adding it.
+
 **"The printer name is invalid" / "OpenPrinter … error 1801"** — the registered `local` destination does not match the installed name exactly. Refresh the installed list in the panel and add the printer from there.
 
 **"Access is denied" on a local printer** — the service runs as *Local System*, which can print to local printers. If the printer was installed per-user (some USB installers do that), reinstall it for all users, or register it by share (`\\PC\Share`) as a fallback.

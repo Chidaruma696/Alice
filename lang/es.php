@@ -126,6 +126,10 @@ return [
     'result.again' => 'Imprimir de nuevo',
     'result.change' => 'Cambiar impresora',
     'result.panel' => 'Panel',
+    'notfound.title' => 'Alice no conoce esta URL',
+    'notfound.explain' => 'Una URL de impresión debe coincidir con una ruta declarada por un adaptador. Rutas disponibles en este servidor:',
+    'notfound.none' => 'No hay ningún adaptador cargado.',
+    'notfound.howto' => 'Para conservar la URL que ya usa el sistema de ventas, crea adapters/<nombre>/adapter.php con esa ruta (ver docs/adapters.md); el servicio la toma al reiniciar.',
 
     'ui.save' => 'Guardar',
     'ui.saved' => 'Guardado',

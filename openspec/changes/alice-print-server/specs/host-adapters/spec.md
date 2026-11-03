@@ -38,6 +38,13 @@ After printing from a host-adapter URL the system SHALL show a page stating succ
 - **WHEN** a cash register opens a host-adapter URL and the job is sent
 - **THEN** the page reads "Sent to <printer name>" and offers "Print again" and "Change printer"
 
+### Requirement: Unknown print URL is explained
+When a browser requests a path that no route serves (outside `/api/`), the system SHALL answer 404 with an HTML page, in the user's language, that shows the requested URL, lists the routes of every loaded adapter as links, shows load errors of adapters that failed, and says how to add an adapter for the host's URL; the miss SHALL be written to the server log with the client IP. Under `/api/` the 404 stays JSON.
+
+#### Scenario: Sales system points at a route that no adapter declares
+- **WHEN** a station opens `/printer/imprime_nota.php?id_nota=42` and only the example adapter is installed
+- **THEN** the page says Alice does not know that URL, lists `/printer/sample.php`, and no station is registered by the miss
+
 ### Requirement: Legacy sale-ticket adapter ships as documentation
 The repository SHALL document, in the adapter guide, how to port a ticket that is built with ESC/P control codes from a database query, including character-set handling (`ESC R` and `cp850`), without including any office's actual queries.
 

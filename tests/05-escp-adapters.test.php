@@ -86,6 +86,21 @@ test('example adapter is loaded, its route prints a raw ticket and shows the res
     assert_true($app->stations->get('172.18.1.50') !== null, 'adapter URL registers the station');
 });
 
+test('unknown print URL: HTML 404 that lists the adapter routes, JSON 404 under /api', function () {
+    $app = make_app();
+    $res = $app->handle(req('GET', '/printer/imprime_nota.php?id_nota=42', ['ip' => '172.18.1.50', 'headers' => ['Accept-Language' => 'es']]));
+    assert_status(404, $res);
+    assert_contains('Alice no conoce esta URL', $res->body);
+    assert_contains('/printer/imprime_nota.php?id_nota=42', $res->body, 'the requested URL is shown');
+    assert_contains('href="/printer/sample.php"', $res->body, 'existing routes are listed as links');
+    assert_contains('adapters/example', $res->body);
+    assert_true($app->stations->get('172.18.1.50') === null, 'a 404 does not register a station');
+
+    $res = $app->handle(req('GET', '/api/nope'));
+    assert_status(404, $res);
+    assert_same(['ok' => false, 'error' => 'not found'], $res->json_decode());
+});
+
 test('handler error yields a failed job, the message, and nothing printed', function () {
     $app = make_app();
     add_printer($app, 'Front desk');

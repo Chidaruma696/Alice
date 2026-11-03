@@ -126,6 +126,10 @@ return [
     'result.again' => 'Print again',
     'result.change' => 'Change printer',
     'result.panel' => 'Panel',
+    'notfound.title' => 'Alice does not know this URL',
+    'notfound.explain' => 'A print URL must match a route declared by an adapter. Routes available on this server:',
+    'notfound.none' => 'No adapter is loaded.',
+    'notfound.howto' => 'To keep the URL the sales system already uses, create adapters/<name>/adapter.php with that route (see docs/adapters.md); the service picks it up at the next restart.',
 
     'ui.save' => 'Save',
     'ui.saved' => 'Saved',

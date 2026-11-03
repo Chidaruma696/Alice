@@ -245,7 +245,20 @@ final class App
         if (str_starts_with($request->path, '/api/')) {
             return Response::json(['ok' => false, 'error' => 'not found'], 404);
         }
-        return Response::text("404 Not Found\n", 404);
+        if ($request->path === '/favicon.ico') {
+            return Response::text("404 Not Found\n", 404);
+        }
+        // A host system pointing at a route no adapter declares is the usual cause; make it
+        // visible in the service log and tell the browser which routes exist.
+        error_log('[alice] 404 ' . $request->method . ' ' . $request->uri() . ' from ' . $request->clientIp);
+        $html = $this->render('layout', [
+            'title' => $this->i18n->t('notfound.title'),
+            'content' => $this->render('notfound', [
+                'path' => $request->uri(),
+                'adapters' => $this->adapters->status(false),
+            ]),
+        ]);
+        return Response::html($html, 404);
     }
 
     private function unauthorised(Request $request): Response
