@@ -33,7 +33,7 @@ Offices with a web-based sales system and one or more ESC/P ticket printers (Eps
 
 ## Impact
 
-- New repository `Alice` (private): PHP 8 application, PowerShell raw-print helper, Inno Setup script, build script, tests.
+- New repository `Alice` (public): PHP 8 application, PowerShell raw-print helper, Inno Setup script, build script, tests.
 - External dependencies bundled at build time: PHP 8.3 Windows NTS zip (php.net), WinSW service wrapper (MIT), Inno Setup 6/7 to compile the installer. None at runtime beyond Windows itself.
 - The office's current `printer/` folder under Laragon is retired once Alice is installed on the same PC; the sales system's URLs do not change, only the host name/IP they point to.
 - Development on Linux needs `php` (8.2+) to run the test suite and the dry-run server; the installer and the spooler helper can only be verified on Windows.
